@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Règles pour les prompts
+    match /prompts/{promptId} {
+      // Lecture : tous les prompts publics + ses propres prompts
+      allow read: if resource.data.isPublic == true || 
+                     (request.auth != null && resource.data.authorId == request.auth.uid);
+      
+      // Création : utilisateurs connectés uniquement, avec validation des données
+      allow create: if request.auth != null && 
+                       request.auth.uid == resource.data.authorId &&
+                       validatePromptData(resource.data);
+      
+      // Modification/Suppression : propriétaire uniquement
+      allow update, delete: if request.auth != null && 
+                               resource.data.authorId == request.auth.uid;
+    }
+    
+    // Règles pour les likes
+    match /likes/{likeId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null && 
+                       request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && 
+                       request.auth.uid == resource.data.userId;
+    }
+    
+    // Règles pour les copies
+    match /copies/{copyId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null && 
+                       request.auth.uid == resource.data.userId;
+    }
+    
+    // Règles pour les profils utilisateurs
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+  
+  // Fonction de validation des données de prompt
+  function validatePromptData(data) {
+    return data.keys().hasAll(['title', 'content', 'category', 'authorId', 'authorName', 'isPublic']) &&
+           data.title is string && data.title.size() > 0 &&
+           data.content is string && data.content.size() > 0 &&
+           data.category is string && data.category.size() > 0 &&
+           data.authorId is string &&
+           data.authorName is string &&
+           data.isPublic is bool;
+  }
+}

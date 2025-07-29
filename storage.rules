@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Règles pour les images de prompts
+    match /prompt-images/{allPaths=**} {
+      // Lecture : accessible à tous
+      allow read: if true;
+      
+      // Écriture : utilisateurs connectés uniquement
+      allow write: if request.auth != null &&
+                      // Vérifier la taille du fichier (max 5MB)
+                      request.resource.size < 5 * 1024 * 1024 &&
+                      // Vérifier le type de fichier
+                      request.resource.contentType.matches('image/.*');
+      
+      // Suppression : utilisateurs connectés uniquement
+      allow delete: if request.auth != null;
+    }
+  }
+}
