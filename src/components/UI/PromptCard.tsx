@@ -72,7 +72,6 @@ const PromptCard: React.FC<PromptCardProps> = ({ prompt, isLiked = false, onView
                 <FontAwesomeIcon icon={faDownload} className="mr-1" />
                 <span>{prompt.copies} copies</span>
               </div>
-              </span>
             )}
           </div>
           
