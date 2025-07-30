@@ -47,7 +47,8 @@ export class PromptService {
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
       } as Prompt));
     } catch (error) {
       console.error('Error fetching public prompts:', error);
@@ -69,7 +70,8 @@ export class PromptService {
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
       } as Prompt));
     } catch (error) {
       console.error('Error fetching user prompts:', error);
@@ -80,15 +82,27 @@ export class PromptService {
   /**
    * Create a new prompt
    */
-  async createPrompt(promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt' | 'likes' | 'copyCount'>): Promise<string> {
+  async createPrompt(promptData: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt' | 'likes' | 'copies'>, image?: File): Promise<string> {
     try {
+      // Créer d'abord le document pour obtenir l'ID
       const docRef = await addDoc(this.promptsCollection, {
         ...promptData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         likes: 0,
-        copyCount: 0
+        copies: 0
       });
+
+      // Upload de l'image si fournie
+      if (image) {
+        try {
+          const imageUrl = await this.uploadPromptImage(docRef.id, image);
+          await updateDoc(docRef, { imageUrl });
+        } catch (imageError) {
+          console.error('Error uploading image:', imageError);
+          // Continue sans l'image si l'upload échoue
+        }
+      }
 
       return docRef.id;
     } catch (error) {
@@ -128,7 +142,7 @@ export class PromptService {
         // Delete associated image if exists
         if (promptData.imageUrl) {
           try {
-            const imageRef = ref(storage, `prompts/${promptId}/image`);
+            const imageRef = ref(storage, `prompt-images/${promptId}`);
             await deleteObject(imageRef);
           } catch (imageError) {
             console.warn('Error deleting image:', imageError);
@@ -159,7 +173,7 @@ export class PromptService {
         throw new Error('Image must be less than 5MB');
       }
 
-      const imageRef = ref(storage, `prompts/${promptId}/image`);
+      const imageRef = ref(storage, `prompt-images/${promptId}`);
       const snapshot = await uploadBytes(imageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
       
@@ -175,16 +189,22 @@ export class PromptService {
    */
   async toggleLike(promptId: string, userId: string): Promise<boolean> {
     try {
-      const likeId = `${userId}_${promptId}`;
-      const likeRef = doc(this.likesCollection, likeId);
+      // Chercher si le like existe déjà
+      const q = query(
+        this.likesCollection,
+        where('userId', '==', userId),
+        where('promptId', '==', promptId)
+      );
+      
+      const snapshot = await getDocs(q);
       const promptRef = doc(this.promptsCollection, promptId);
       
-      const likeDoc = await getDoc(likeRef);
-      const isLiked = likeDoc.exists();
+      const isLiked = !snapshot.empty;
 
       if (isLiked) {
         // Unlike: remove like document and decrement counter
-        await deleteDoc(likeRef);
+        const likeDoc = snapshot.docs[0];
+        await deleteDoc(likeDoc.ref);
         await updateDoc(promptRef, {
           likes: increment(-1)
         });
@@ -229,12 +249,21 @@ export class PromptService {
   /**
    * Increment copy count for a prompt
    */
-  async incrementCopyCount(promptId: string): Promise<void> {
+  async incrementCopyCount(promptId: string, userId?: string): Promise<void> {
     try {
       const promptRef = doc(this.promptsCollection, promptId);
       await updateDoc(promptRef, {
-        copyCount: increment(1)
+        copies: increment(1)
       });
+      
+      // Optionnel: enregistrer qui a copié
+      if (userId) {
+        await addDoc(collection(db, 'copies'), {
+          userId,
+          promptId,
+          createdAt: serverTimestamp()
+        });
+      }
     } catch (error) {
       console.error('Error incrementing copy count:', error);
       // Don't throw error for copy count as it's not critical
@@ -273,7 +302,8 @@ export class PromptService {
       if (promptDoc.exists()) {
         return {
           id: promptDoc.id,
-          ...promptDoc.data()
+          ...promptDoc.data(),
+          createdAt: promptDoc.data()?.createdAt?.toDate() || new Date()
         } as Prompt;
       }
       
@@ -294,7 +324,7 @@ export class PromptService {
       
       if (userDoc.exists()) {
         return {
-          id: userDoc.id,
+          uid: userDoc.id,
           ...userDoc.data()
         } as User;
       }

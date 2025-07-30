@@ -219,7 +219,10 @@ const Explore: React.FC = () => {
       {/* Prompts Grid */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+            <p className="text-gray-500 dark:text-gray-400">Chargement des prompts...</p>
+          </div>
         </div>
       ) : (
         <motion.div
@@ -247,7 +250,7 @@ const Explore: React.FC = () => {
         </motion.div>
       )}
 
-      {filteredPrompts.length === 0 && (
+      {!loading && filteredPrompts.length === 0 && prompts.length > 0 && (
         <motion.div
           className="text-center py-12"
           initial={{ opacity: 0 }}
@@ -255,7 +258,20 @@ const Explore: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <p className="text-gray-500 dark:text-gray-400 text-lg">
-            Aucun prompt trouvé pour cette recherche
+            Aucun prompt trouvé pour "{searchTerm}" dans la catégorie {selectedCategory !== 'all' ? selectedCategory : 'toutes'}
+          </p>
+        </motion.div>
+      )}
+
+      {!loading && prompts.length === 0 && (
+        <motion.div
+          className="text-center py-12"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <p className="text-gray-500 dark:text-gray-400 text-lg">
+            Aucun prompt public disponible pour le moment
           </p>
         </motion.div>
       )}

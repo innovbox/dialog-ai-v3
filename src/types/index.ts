@@ -14,11 +14,11 @@ export interface Prompt {
   imageUrl?: string;
   authorId: string;
   authorName: string;
-  createdAt: Date;
+  createdAt: Date | any; // Firebase Timestamp
   likes: number;
   copies: number;
   isPublic: boolean;
-  updatedAt?: Date;
+  updatedAt?: Date | any; // Firebase Timestamp
 }
 
 export interface Category {
