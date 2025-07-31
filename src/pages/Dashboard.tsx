@@ -243,12 +243,20 @@ const Dashboard: React.FC = () => {
           </div>
         ) : userPrompts.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faPlus} className="text-2xl text-blue-500" />
+              </div>
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 text-xl font-medium mb-2">
               Vous n'avez pas encore créé de prompts
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">
+              Commencez par créer votre premier prompt et partagez-le avec la communauté
             </p>
             <Link
               to="/create"
-              className="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
             >
               <FontAwesomeIcon icon={faPlus} className="mr-2" />
               Créer votre premier prompt

@@ -257,9 +257,16 @@ const Explore: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <p className="text-gray-500 dark:text-gray-400 text-lg">
-            Aucun prompt trouvé pour "{searchTerm}" dans la catégorie {selectedCategory !== 'all' ? selectedCategory : 'toutes'}
-          </p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+            <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+              Aucun prompt trouvé
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">
+              {searchTerm && `Recherche: "${searchTerm}"`}
+              {searchTerm && selectedCategory !== 'all' && ' • '}
+              {selectedCategory !== 'all' && `Catégorie: ${selectedCategory}`}
+            </p>
+          </div>
         </motion.div>
       )}
 
@@ -270,9 +277,14 @@ const Explore: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <p className="text-gray-500 dark:text-gray-400 text-lg">
-            Aucun prompt public disponible pour le moment
-          </p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700">
+            <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">
+              Aucun prompt public disponible
+            </p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm">
+              Soyez le premier à publier un prompt !
+            </p>
+          </div>
         </motion.div>
       )}
 
