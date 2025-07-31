@@ -15,14 +15,21 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
+    
     setError('');
     setLoading(true);
 
     try {
       await login(email, password);
       navigate('/dashboard');
-    } catch (error) {
-      setError('Échec de la connexion. Vérifiez vos identifiants.');
+    } catch (error: any) {
+      console.error('Erreur de connexion:', error);
+      setError(error.message || 'Échec de la connexion. Vérifiez vos identifiants.');
     } finally {
       setLoading(false);
     }
@@ -35,8 +42,9 @@ const Login: React.FC = () => {
     try {
       await loginWithGoogle();
       navigate('/dashboard');
-    } catch (error) {
-      setError('Échec de la connexion avec Google.');
+    } catch (error: any) {
+      console.error('Erreur de connexion Google:', error);
+      setError(error.message || 'Échec de la connexion avec Google.');
     } finally {
       setLoading(false);
     }

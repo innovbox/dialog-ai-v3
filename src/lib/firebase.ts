@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -25,10 +25,26 @@ const requiredEnvVars = [
 const missingVars = requiredEnvVars.filter(varName => !import.meta.env[varName]);
 if (missingVars.length > 0) {
   console.error('Variables d\'environnement Firebase manquantes:', missingVars);
-  console.error('Veuillez créer un fichier .env avec vos clés Firebase');
+  console.error('Veuillez configurer vos clés Firebase dans le fichier .env');
+  console.error('Exemple de configuration dans .env.example');
 }
 
-const app = initializeApp(firebaseConfig);
+// Initialiser Firebase
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+  console.log('✅ Firebase initialisé avec succès');
+} catch (error) {
+  console.error('❌ Erreur d\'initialisation Firebase:', error);
+  throw new Error('Impossible d\'initialiser Firebase. Vérifiez votre configuration.');
+}
+
+// Initialiser les services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Configuration pour le développement
+if (import.meta.env.DEV) {
+  console.log('🔧 Mode développement détecté');
+}

@@ -17,6 +17,11 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!email || !password || !confirmPassword) {
+      setError('Veuillez remplir tous les champs');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
@@ -27,14 +32,22 @@ const Register: React.FC = () => {
       setError('Le mot de passe doit contenir au moins 6 caractères');
       return;
     }
+    
+    // Validation email basique
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Format d\'email invalide');
+      return;
+    }
 
     setLoading(true);
 
     try {
       await register(email, password);
       navigate('/dashboard');
-    } catch (error) {
-      setError('Échec de l\'inscription. Cet email est peut-être déjà utilisé.');
+    } catch (error: any) {
+      console.error('Erreur d\'inscription:', error);
+      setError(error.message || 'Échec de l\'inscription. Cet email est peut-être déjà utilisé.');
     } finally {
       setLoading(false);
     }
@@ -47,8 +60,9 @@ const Register: React.FC = () => {
     try {
       await loginWithGoogle();
       navigate('/dashboard');
-    } catch (error) {
-      setError('Échec de l\'inscription avec Google.');
+    } catch (error: any) {
+      console.error('Erreur d\'inscription Google:', error);
+      setError(error.message || 'Échec de l\'inscription avec Google.');
     } finally {
       setLoading(false);
     }
