@@ -121,15 +121,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
+      // Essayer d'abord avec popup, puis fallback vers redirect
+      let result;
+      try {
+        result = await signInWithPopup(auth, googleProvider);
+      } catch (popupError: any) {
+        if (popupError.code === 'auth/popup-blocked') {
+          // Fallback vers redirect si popup bloquée
+          await signInWithRedirect(auth, googleProvider);
+          return; // La redirection va recharger la page
+        }
+        throw popupError;
+      }
+      
       provider.addScope('email');
       provider.addScope('profile');
       
       const result = await signInWithPopup(auth, provider);
       console.log('✅ Connexion Google réussie:', result.user.email);
-      
-      // Créer ou mettre à jour le profil utilisateur
-      await createUserProfile(result.user);
       
       return result;
     } catch (error: any) {
@@ -150,6 +159,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   };
+
+  // Gérer le retour de redirection Google
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const user = result.user;
+          console.log('✅ Connexion Google par redirection réussie:', user.email);
+          
+          // Créer le profil utilisateur si nécessaire
+          try {
+            await createUserProfile(user);
+          } catch (profileError) {
+            console.error('Erreur création profil:', profileError);
+          }
+        }
+      } catch (error: any) {
+        console.error('❌ Erreur redirection Google:', error);
+        toast.error('Erreur lors de la connexion Google');
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
 
   const logout = async () => {
     try {

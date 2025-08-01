@@ -57,9 +57,11 @@ const Register: React.FC = () => {
     setError('');
     setLoading(true);
 
-    try {
-      await loginWithGoogle();
-      navigate('/dashboard');
+      // Si on arrive ici, c'est que la connexion popup a réussi
+      // Sinon, une redirection aura lieu
+    } catch (error) {
+      // Les erreurs sont déjà gérées dans AuthContext
+      console.error('Erreur handleGoogleRegister:', error);
     } catch (error: any) {
       console.error('Erreur d\'inscription Google:', error);
       setError(error.message || 'Échec de l\'inscription avec Google.');
