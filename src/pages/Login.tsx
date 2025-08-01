@@ -39,6 +39,7 @@ const Login: React.FC = () => {
     setError('');
     setLoading(true);
 
+    try {
       // Si on arrive ici, c'est que la connexion popup a réussi
       // Sinon, une redirection aura lieu
     } catch (error) {
