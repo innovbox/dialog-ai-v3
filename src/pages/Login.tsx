@@ -40,11 +40,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // Si on arrive ici, c'est que la connexion popup a réussi
-      // Sinon, une redirection aura lieu
-    } catch (error) {
-      // Les erreurs sont déjà gérées dans AuthContext
-      console.error('Erreur handleGoogleLogin:', error);
+      await loginWithGoogle();
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Erreur de connexion Google:', error);
       setError(error.message || 'Échec de la connexion avec Google.');
