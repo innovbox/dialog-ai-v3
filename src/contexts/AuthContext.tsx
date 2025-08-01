@@ -7,11 +7,18 @@ import {
   signOut, 
   GoogleAuthProvider, 
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { User } from '../types';
+
+// Créer le provider Google en dehors du composant
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
 
 interface AuthContextType {
   currentUser: User | null;
@@ -121,35 +128,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
-      // Essayer d'abord avec popup, puis fallback vers redirect
-      let result;
-      try {
-        result = await signInWithPopup(auth, googleProvider);
-      } catch (popupError: any) {
-        if (popupError.code === 'auth/popup-blocked') {
-          // Fallback vers redirect si popup bloquée
-          await signInWithRedirect(auth, googleProvider);
-          return; // La redirection va recharger la page
-        }
-        throw popupError;
-      }
-      
-      provider.addScope('email');
-      provider.addScope('profile');
-      
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, googleProvider);
       console.log('✅ Connexion Google réussie:', result.user.email);
+      
+      // Créer le profil utilisateur si nécessaire
+      await createUserProfile(result.user);
       
       return result;
     } catch (error: any) {
       console.error('❌ Erreur de connexion Google:', error);
       
+      // Si popup bloquée, utiliser la redirection
+      if (error.code === 'auth/popup-blocked') {
+        console.log('🔄 Popup bloquée, redirection vers Google...');
+        await signInWithRedirect(auth, googleProvider);
+        return; // La redirection va recharger la page
+      }
+      
       // Messages d'erreur personnalisés
       switch (error.code) {
         case 'auth/popup-closed-by-user':
           throw new Error('Connexion annulée par l\'utilisateur');
-        case 'auth/popup-blocked':
-          throw new Error('Popup bloquée. Autorisez les popups pour ce site');
         case 'auth/cancelled-popup-request':
           throw new Error('Demande de connexion annulée');
         case 'auth/account-exists-with-different-credential':
@@ -178,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error: any) {
         console.error('❌ Erreur redirection Google:', error);
-        toast.error('Erreur lors de la connexion Google');
+        console.error('Erreur lors de la connexion Google');
       }
     };
 
