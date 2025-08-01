@@ -25,6 +25,28 @@ export class PromptService {
   private likesCollection = collection(db, 'likes');
 
   /**
+   * Initialize sample prompts (for development/demo)
+   */
+  async initializeSamplePrompts(): Promise<void> {
+    try {
+      const { samplePrompts } = await import('../data/samplePrompts');
+      
+      for (const promptData of samplePrompts) {
+        await addDoc(this.promptsCollection, {
+          ...promptData,
+          authorId: 'demo-user',
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      
+      console.log('✅ Sample prompts initialized');
+    } catch (error) {
+      console.error('Error initializing sample prompts:', error);
+    }
+  }
+
+  /**
    * Get all public prompts with optional filtering
    */
   async getPublicPrompts(category?: string): Promise<Prompt[]> {

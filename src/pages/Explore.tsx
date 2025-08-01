@@ -9,6 +9,7 @@ import { useToastContext } from '../contexts/ToastContext';
 import { PromptService } from '../services/promptService';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/UI/PageTransition';
+import { samplePrompts } from '../data/samplePrompts';
 
 const Explore: React.FC = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -22,6 +23,7 @@ const Explore: React.FC = () => {
   
   const { success, error } = useToastContext();
   const { currentUser } = useAuth();
+  const promptService = new PromptService();
 
   const categories = [
     { id: 'all', name: 'Toutes' },
@@ -40,8 +42,19 @@ const Explore: React.FC = () => {
       try {
         setLoading(true);
         const publicPrompts = await PromptService.getPublicPrompts();
-        setPrompts(publicPrompts);
-        setFilteredPrompts(publicPrompts);
+        
+        // Si aucun prompt public, ajouter les exemples
+        if (publicPrompts.length === 0) {
+          console.log('Aucun prompt trouvé, ajout des exemples...');
+          await promptService.initializeSamplePrompts();
+          // Recharger après ajout des exemples
+          const updatedPrompts = await PromptService.getPublicPrompts();
+          setPrompts(updatedPrompts);
+          setFilteredPrompts(updatedPrompts);
+        } else {
+          setPrompts(publicPrompts);
+          setFilteredPrompts(publicPrompts);
+        }
       } catch (err) {
         error('Erreur lors du chargement des prompts');
         console.error('Erreur:', err);
@@ -51,7 +64,7 @@ const Explore: React.FC = () => {
     };
 
     loadPrompts();
-  }, []);
+  }, [error]);
 
   // Charger les likes de l'utilisateur
   useEffect(() => {
