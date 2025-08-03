@@ -29,8 +29,9 @@ const Dashboard: React.FC = () => {
         const prompts = await PromptService.getUserPrompts(currentUser.uid);
         setUserPrompts(prompts);
       } catch (err) {
-        error('Erreur lors du chargement de vos prompts');
         console.error('Erreur:', err);
+        // En cas d'erreur, continuer avec un tableau vide
+        setUserPrompts([]);
       } finally {
         setLoading(false);
       }

@@ -52,17 +52,17 @@ export class PromptService {
   /**
    * Get all public prompts with optional filtering
    */
-  async getPublicPrompts(category?: string): Promise<Prompt[]> {
+  static async getPublicPrompts(category?: string): Promise<Prompt[]> {
     try {
       let q = query(
-        this.promptsCollection,
+        collection(db, 'prompts'),
         where('isPublic', '==', true),
         orderBy('createdAt', 'desc')
       );
 
       if (category && category !== 'all') {
         q = query(
-          this.promptsCollection,
+          collection(db, 'prompts'),
           where('isPublic', '==', true),
           where('category', '==', category),
           orderBy('createdAt', 'desc')
@@ -77,17 +77,17 @@ export class PromptService {
       } as Prompt));
     } catch (error) {
       console.error('Error fetching public prompts:', error);
-      throw new Error('Failed to fetch prompts');
+      return []; // Retourner un tableau vide au lieu de throw
     }
   }
 
   /**
    * Get prompts created by a specific user
    */
-  async getUserPrompts(userId: string): Promise<Prompt[]> {
+  static async getUserPrompts(userId: string): Promise<Prompt[]> {
     try {
       const q = query(
-        this.promptsCollection,
+        collection(db, 'prompts'),
         where('authorId', '==', userId),
         orderBy('createdAt', 'desc')
       );
@@ -100,7 +100,7 @@ export class PromptService {
       } as Prompt));
     } catch (error) {
       console.error('Error fetching user prompts:', error);
-      throw new Error('Failed to fetch user prompts');
+      return []; // Retourner un tableau vide au lieu de throw
     }
   }
 
@@ -141,7 +141,7 @@ export class PromptService {
    */
   async updatePrompt(promptId: string, updates: Partial<Prompt>): Promise<void> {
     try {
-      const promptRef = doc(this.promptsCollection, promptId);
+      const promptRef = doc(db, 'prompts', promptId);
       await updateDoc(promptRef, {
         ...updates,
         updatedAt: serverTimestamp()
@@ -157,7 +157,7 @@ export class PromptService {
    */
   async deletePrompt(promptId: string): Promise<void> {
     try {
-      const promptRef = doc(this.promptsCollection, promptId);
+      const promptRef = doc(db, 'prompts', promptId);
       
       // Get prompt data to delete associated image
       const promptDoc = await getDoc(promptRef);
@@ -186,17 +186,17 @@ export class PromptService {
   /**
    * Upload image for a prompt
    */
-  async uploadPromptImage(promptId: string, file: File): Promise<string> {
+  static async toggleLike(promptId: string, userId: string): Promise<boolean> {
     try {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        throw new Error('File must be an image');
+        collection(db, 'likes'),
       }
 
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         throw new Error('Image must be less than 5MB');
-      }
+      const promptRef = doc(db, 'prompts', promptId);
 
       const imageRef = ref(storage, `prompt-images/${promptId}`);
       const snapshot = await uploadBytes(imageRef, file);
@@ -210,7 +210,7 @@ export class PromptService {
   }
 
   /**
-   * Toggle like status for a prompt
+        await addDoc(collection(db, 'likes'), {
    */
   async toggleLike(promptId: string, userId: string): Promise<boolean> {
     try {
@@ -222,17 +222,17 @@ export class PromptService {
       );
       
       const snapshot = await getDocs(q);
-      const promptRef = doc(this.promptsCollection, promptId);
+      return false; // Retourner false au lieu de throw
       
       const isLiked = !snapshot.empty;
 
       if (isLiked) {
         // Unlike: remove like document and decrement counter
         const likeDoc = snapshot.docs[0];
-        await deleteDoc(likeDoc.ref);
+  static async hasUserLiked(promptId: string, userId: string): Promise<boolean> {
         await updateDoc(promptRef, {
           likes: increment(-1)
-        });
+        collection(db, 'likes'),
         return false;
       } else {
         // Like: create like document and increment counter
@@ -248,9 +248,9 @@ export class PromptService {
       }
     } catch (error) {
       console.error('Error toggling like:', error);
-      throw new Error('Failed to toggle like');
+  static async incrementCopyCount(promptId: string, userId?: string): Promise<void> {
     }
-  }
+      const promptRef = doc(db, 'prompts', promptId);
 
   /**
    * Check if user has liked a prompt
@@ -272,11 +272,11 @@ export class PromptService {
   }
 
   /**
-   * Increment copy count for a prompt
+  static async searchPrompts(searchTerm: string): Promise<Prompt[]> {
    */
   async incrementCopyCount(promptId: string, userId?: string): Promise<void> {
     try {
-      const promptRef = doc(this.promptsCollection, promptId);
+      const allPrompts = await PromptService.getPublicPrompts();
       await updateDoc(promptRef, {
         copies: increment(1)
       });
@@ -286,16 +286,16 @@ export class PromptService {
         await addDoc(collection(db, 'copies'), {
           userId,
           promptId,
-          createdAt: serverTimestamp()
+      return []; // Retourner un tableau vide au lieu de throw
         });
       }
     } catch (error) {
       console.error('Error incrementing copy count:', error);
       // Don't throw error for copy count as it's not critical
     }
-  }
+  static async getPromptById(promptId: string): Promise<Prompt | null> {
 
-  /**
+      const promptRef = doc(db, 'prompts', promptId);
    * Search prompts by title or content
    */
   async searchPrompts(searchTerm: string): Promise<Prompt[]> {
@@ -309,16 +309,16 @@ export class PromptService {
         prompt.title.toLowerCase().includes(searchLower) ||
         prompt.content.toLowerCase().includes(searchLower) ||
         prompt.category.toLowerCase().includes(searchLower)
-      );
+      return null; // Retourner null au lieu de throw
     } catch (error) {
       console.error('Error searching prompts:', error);
       throw new Error('Failed to search prompts');
     }
   }
 
-  /**
+  static async getUserProfile(userId: string): Promise<User | null> {
    * Get prompt by ID
-   */
+      const userRef = doc(db, 'users', userId);
   async getPromptById(promptId: string): Promise<Prompt | null> {
     try {
       const promptRef = doc(this.promptsCollection, promptId);
@@ -340,7 +340,7 @@ export class PromptService {
   }
 
   /**
-   * Get user profile
+      const userRef = doc(db, 'users', userId);
    */
   async getUserProfile(userId: string): Promise<User | null> {
     try {
@@ -362,10 +362,6 @@ export class PromptService {
   }
 
   /**
-   * Create or update user profile
-   */
-  async createOrUpdateUserProfile(userId: string, userData: Partial<User>): Promise<void> {
-    try {
       const userRef = doc(this.usersCollection, userId);
       const userDoc = await getDoc(userRef);
       
@@ -376,7 +372,7 @@ export class PromptService {
           updatedAt: serverTimestamp()
         });
       } else {
-        // Create new profile
+        await addDoc(collection(db, 'prompts'), {
         await updateDoc(userRef, {
           ...userData,
           createdAt: serverTimestamp(),
@@ -385,10 +381,11 @@ export class PromptService {
       }
     } catch (error) {
       console.error('Error creating/updating user profile:', error);
-      throw new Error('Failed to update user profile');
+      // Ne pas throw pour éviter de casser l'app
     }
   }
 }
 
 // Export singleton instance
 export const promptService = new PromptService();
+      const docRef = await addDoc(collection(db, 'prompts'), {

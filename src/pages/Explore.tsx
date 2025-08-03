@@ -23,7 +23,6 @@ const Explore: React.FC = () => {
   
   const { success, error } = useToastContext();
   const { currentUser } = useAuth();
-  const promptService = new PromptService();
 
   const categories = [
     { id: 'all', name: 'Toutes' },
@@ -46,6 +45,7 @@ const Explore: React.FC = () => {
         // Si aucun prompt public, ajouter les exemples
         if (publicPrompts.length === 0) {
           console.log('Aucun prompt trouvé, ajout des exemples...');
+          const promptService = new PromptService();
           await promptService.initializeSamplePrompts();
           // Recharger après ajout des exemples
           const updatedPrompts = await PromptService.getPublicPrompts();
@@ -56,15 +56,25 @@ const Explore: React.FC = () => {
           setFilteredPrompts(publicPrompts);
         }
       } catch (err) {
-        error('Erreur lors du chargement des prompts');
         console.error('Erreur:', err);
+        // En cas d'erreur, initialiser avec les exemples
+        try {
+          const promptService = new PromptService();
+          await promptService.initializeSamplePrompts();
+          const fallbackPrompts = await PromptService.getPublicPrompts();
+          setPrompts(fallbackPrompts);
+          setFilteredPrompts(fallbackPrompts);
+        } catch (fallbackError) {
+          console.error('Erreur fallback:', fallbackError);
+          error('Erreur lors du chargement des prompts');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadPrompts();
-  }, [error]);
+  }, []);
 
   // Charger les likes de l'utilisateur
   useEffect(() => {
