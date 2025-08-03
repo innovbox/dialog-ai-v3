@@ -54,31 +54,45 @@ const PromptCard: React.FC<PromptCardProps> = ({
   const formatDate = (date: any) => {
     if (!date) return '';
     
-    let dateObj: Date;
-    if (date.toDate && typeof date.toDate === 'function') {
-      // Firebase Timestamp
-      dateObj = date.toDate();
-    } else if (date instanceof Date) {
-      dateObj = date;
-    } else {
+    try {
+      let dateObj: Date;
+      if (date && typeof date.toDate === 'function') {
+        // Firebase Timestamp
+        dateObj = date.toDate();
+      } else if (date instanceof Date) {
+        dateObj = date;
+      } else if (typeof date === 'string') {
+        dateObj = new Date(date);
+      } else {
+        return '';
+      }
+      
+      return dateObj.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short'
+      });
+    } catch (error) {
+      console.warn('Error formatting date:', error);
       return '';
     }
-    
-    return dateObj.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short'
-    });
   };
 
   const truncateContent = (content: string, maxLength: number = 120) => {
+    if (!content) return '';
     if (content.length <= maxLength) return content;
     return content.substring(0, maxLength) + '...';
   };
 
+  // Vérifier que le prompt a les propriétés requises
+  if (!prompt || !prompt.id || !prompt.title || !prompt.content) {
+    console.warn('Invalid prompt data:', prompt);
+    return null;
+  }
+
   return (
     <motion.div
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 group"
-      whileHover={{ y: -4 }}
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300 group h-full flex flex-col"
+      whileHover={{ y: -2 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -98,61 +112,59 @@ const PromptCard: React.FC<PromptCardProps> = ({
         </div>
       )}
       
-      <div className="p-6">
+      <div className="p-6 flex flex-col flex-1">
         {/* Header avec titre et catégorie */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-              {prompt.title}
-            </h3>
-            <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${getCategoryColor(prompt.category)}`}>
-              {getCategoryName(prompt.category)}
-            </span>
-          </div>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 leading-tight">
+            {prompt.title}
+          </h3>
+          <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${getCategoryColor(prompt.category)}`}>
+            {getCategoryName(prompt.category)}
+          </span>
         </div>
 
         {/* Contenu du prompt */}
-        <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3 leading-relaxed">
+        <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3 leading-relaxed flex-1">
           {truncateContent(prompt.content)}
         </p>
 
-        {/* Informations auteur et stats */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex items-center">
-              <FontAwesomeIcon icon={faUser} className="mr-1.5" />
-              <span className="truncate max-w-20">
-                {prompt.authorName || 'Anonyme'}
-              </span>
-            </div>
-            
-            {prompt.createdAt && (
-              <div className="flex items-center">
-                <span>{formatDate(prompt.createdAt)}</span>
-              </div>
-            )}
+        {/* Informations auteur et date */}
+        <div className="flex items-center justify-between mb-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center min-w-0 flex-1">
+            <FontAwesomeIcon icon={faUser} className="mr-2 flex-shrink-0" />
+            <span className="truncate">
+              {prompt.authorName || 'Anonyme'}
+            </span>
           </div>
           
-          {/* Stats */}
-          <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
-            {prompt.copies > 0 && (
-              <div className="flex items-center">
-                <FontAwesomeIcon icon={faDownload} className="mr-1" />
-                <span>{prompt.copies}</span>
-              </div>
-            )}
-            
+          {prompt.createdAt && (
+            <div className="ml-4 flex-shrink-0">
+              {formatDate(prompt.createdAt)}
+            </div>
+          )}
+        </div>
+
+        {/* Stats */}
+        {(prompt.likes > 0 || prompt.copies > 0) && (
+          <div className="flex items-center space-x-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
             {prompt.likes > 0 && (
               <div className="flex items-center">
                 <FontAwesomeIcon icon={faHeart} className="mr-1" />
                 <span>{prompt.likes}</span>
               </div>
             )}
+            
+            {prompt.copies > 0 && (
+              <div className="flex items-center">
+                <FontAwesomeIcon icon={faDownload} className="mr-1" />
+                <span>{prompt.copies}</span>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center space-x-2">
             {/* Bouton Like */}
             <motion.button
