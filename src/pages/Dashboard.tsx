@@ -264,13 +264,10 @@ const Dashboard: React.FC = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {userPrompts.map((prompt, index) => (
+            {userPrompts.map((prompt) => (
               <motion.div
                 key={prompt.id}
-                className="relative"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 * index }}
+                className="relative h-full"
               >
                 <PromptCard
                   prompt={prompt}

@@ -244,12 +244,10 @@ const Explore: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {filteredPrompts.map((prompt, index) => (
+          {filteredPrompts.map((prompt) => (
             <motion.div
               key={prompt.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 * index }}
+              className="h-full"
             >
               <PromptCard
                 prompt={prompt}

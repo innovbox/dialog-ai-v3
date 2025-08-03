@@ -31,6 +31,8 @@ export class PromptService {
     try {
       const { samplePrompts } = await import('../data/samplePrompts');
       
+      console.log('🔄 Initialisation des prompts d\'exemple...');
+      
       for (const promptData of samplePrompts) {
         await addDoc(this.promptsCollection, {
           ...promptData,
@@ -40,9 +42,10 @@ export class PromptService {
         });
       }
       
-      console.log('✅ Sample prompts initialized');
+      console.log(`✅ ${samplePrompts.length} prompts d'exemple ajoutés`);
     } catch (error) {
-      console.error('Error initializing sample prompts:', error);
+      console.error('❌ Erreur lors de l\'initialisation des prompts:', error);
+      throw error;
     }
   }
 
